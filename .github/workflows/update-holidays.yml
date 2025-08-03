@@ -1,12 +1,12 @@
-name: 업데이트-휴일
+name: update-holidays
 
 on:
-  schedule:
-    - cron: '0 0 1 * *'  # 매월 1일 00:00 UTC
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # 매일 자정 (UTC 기준)
 
 jobs:
-  update-holidays:
+  update:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,23 +16,18 @@ jobs:
       - name: Node.js 설정
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: 종속성 설치
-        run: npm install  # working-directory 제거
+        run: npm ci
 
       - name: 업데이트 스크립트 실행
-        run: node scripts/update-holidays.js  # working-directory 제거
+        run: node scripts/update-holidays.js
 
       - name: 변경 사항 커밋 및 푸시
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-
-          if [ -n "$(git status --porcelain)" ]; then
-            git add public/holidays.json
-            git commit -m "✅ 자동 업데이트된 공휴일 목록"
-            git push
-          else
-            echo "변경 사항이 없어 커밋하지 않음"
-          fi
+          git add .
+          git diff --cached --quiet || git commit -m "자동 업데이트: 최신 휴일 반영"
+          git push
