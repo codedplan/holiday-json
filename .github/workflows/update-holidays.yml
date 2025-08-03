@@ -1,0 +1,38 @@
+name: Update Holidays JSON
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # 매월 1일 00:00 UTC (한국 시간 오전 9시)
+  workflow_dispatch:      # 수동 실행도 가능하게 함
+
+jobs:
+  update-holidays:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run update script
+        run: node scripts/update-holidays.js
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add public/holidays.json
+            git commit -m "✅ 자동 업데이트된 공휴일 목록"
+            git push
+          else
+            echo "변경 사항이 없어 커밋하지 않음"
+          fi
